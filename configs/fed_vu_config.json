@@ -1,0 +1,42 @@
+{
+    "log_path":"/log/tracking",
+    "ssid":"fed_vu",
+    "thread_enable":{
+        "service": true,
+        "md01":false
+    },
+    "md01":{
+        "ip":"10.42.0.31",
+        "port":2000,
+        "az_thresh": 2.0,
+        "el_thresh": 3.0,
+        "timeout": 1.0
+    },
+    "service":{
+        "ip":"0.0.0.0",
+        "port":2000,
+        "session_id":null,
+        "tc":{
+            "uid":"username",
+            "ssid":"fed_vu",
+            "cmd":{
+                "start":null,
+                "stop":null,
+                "query":null,
+                "set": {
+                    "az":0.0,
+                    "el":0.0
+                }
+            }
+        },
+        "tm":{
+            "uid":"username",
+            "ssid":"fed_vu",
+            "type":"tm",
+            "az":0.0,
+            "el":0.0,
+            "az_rate":0.0,
+            "el_rate":0.0
+        }
+    }
+}
