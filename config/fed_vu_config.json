@@ -15,24 +15,34 @@
     "service":{
         "ip":"0.0.0.0",
         "port":2000,
-        "session_id":null,
+        "timeout":0.5
+    },
+    "messages":{
         "tc":{
             "uid":"username",
             "ssid":"fed_vu",
-            "cmd":{
-                "start":null,
-                "stop":null,
-                "query":null,
-                "set": {
-                    "az":0.0,
-                    "el":0.0
-                }
+            "type":"tc",
+            "session_id":null,
+            "tx_ts":"",
+            "rx_ts":"",
+            "cmd":[
+                "start",
+                "stop",
+                "query",
+                "set"
+            ],
+            "params":{
+              "az":0.0,
+              "el":0.0
             }
         },
         "tm":{
             "uid":"username",
             "ssid":"fed_vu",
-            "type":"tm",
+            "type":["tm","bad_syntax"],
+            "session_id":null,
+            "tx_ts":"",
+            "rx_ts":"",
             "az":0.0,
             "el":0.0,
             "az_rate":0.0,

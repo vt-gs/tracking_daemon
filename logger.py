@@ -24,7 +24,7 @@ def setup_logger(log_name, path, level=logging.INFO, ts = None):
     log_file = "{:s}_{:s}.log".format(log_name, ts)
     log_path = '/'.join([path, log_file])
     #log_path = os.getcwd() + '/log/' + log_file
-    print log_path
+    #print log_path
     formatter = MyFormatter(fmt='%(asctime)s | %(threadName)s | %(levelname)s | %(message)s',datefmt='%Y-%m-%dT%H:%M:%S.%fZ')
     #fileHandler = logging.FileHandler(log_path, mode='w')
     fileHandler = logging.FileHandler(log_path)
@@ -35,4 +35,5 @@ def setup_logger(log_name, path, level=logging.INFO, ts = None):
     l.addHandler(fileHandler)
     l.info('Logger Initialized')
     #l.addHandler(streamHandler)
-    return fileHandler
+    #return fileHandler
+    return l

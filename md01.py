@@ -20,7 +20,7 @@ import string
 import sys
 import time
 import threading
-from binascii
+import binascii
 import datetime
 import logging
 

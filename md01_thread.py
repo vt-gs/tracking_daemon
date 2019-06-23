@@ -17,13 +17,15 @@
 
 from optparse import OptionParser
 import threading
-from datetime import datetime as date
+import datetime
 import os
 import math
 import sys
 import string
 import time
 import inspect
+from Queue import Queue
+
 from md01 import *
 
 class MD01Thread(threading.Thread):
@@ -66,7 +68,7 @@ class MD01Thread(threading.Thread):
 
         self.thread_fault       = False #indicates unknown failure in thread
         self.thread_dormant     = False
-    
+
     def run(self):
         #time.sleep(1)  #Give parent thread time to spool up
         print self.utc_ts() + self.ssid + " MD01 Thread Started..."
@@ -75,7 +77,7 @@ class MD01Thread(threading.Thread):
         print self.utc_ts() + "MD-01 Poll Rate [s]: " + str(self.poll_rate)
         while (not self._stop.isSet()):
             try:
-                if self.connected == False: 
+                if self.connected == False:
                     self.connected = self.md01.connect()
                     if self.connected == True:
                         print self.utc_ts() + "Connected to " + self.ssid + " MD01 Controller"
@@ -99,9 +101,9 @@ class MD01Thread(threading.Thread):
                                         self.set_flag = True #reset motion flag
                                     else:
                                         opposite_flag = False #indicates set command opposed to direction of motion.
-                                        if (self.az_rate < 0) and (self.tar_az > self.cur_az): opposite_flag = True 
+                                        if (self.az_rate < 0) and (self.tar_az > self.cur_az): opposite_flag = True
                                         elif (self.az_rate > 0) and (self.tar_az < self.cur_az): opposite_flag = True
-                                        if (self.el_rate < 0) and (self.tar_el > self.cur_el): opposite_flag = True 
+                                        if (self.el_rate < 0) and (self.tar_el > self.cur_el): opposite_flag = True
                                         elif (self.el_rate > 0) and (self.tar_el < self.cur_el): opposite_flag = True
                                         if opposite_flag: #Set command in opposite direction of motion
                                             print self.utc_ts()+"Set Command position opposite direction of motion"
@@ -111,11 +113,11 @@ class MD01Thread(threading.Thread):
                                             self.motion_stop_sent = True
                                         else: #Set command is in the direction of rotation
                                             print self.utc_ts()+"Set Command position is in direction of motion"
-                                            #Set Position command does not get a feedback response from MD-01   
+                                            #Set Position command does not get a feedback response from MD-01
                                             self.connected, self.cur_az, self.cur_el = self.md01.set_position(self.tar_az, self.tar_el)
                                 else: #Antenna is stopped
                                     print self.utc_ts()+"Antenna is Stopped, sending SET command to MD01"
-                                    #Set Position command does not get a feedback response from MD-01   
+                                    #Set Position command does not get a feedback response from MD-01
                                     self.motion_stop_sent = False
                                     self.connected, self.cur_az, self.cur_el = self.md01.set_position(self.tar_az, self.tar_el)
                     time.sleep(self.poll_rate)
@@ -141,19 +143,19 @@ class MD01Thread(threading.Thread):
             self.time_delta = (self.cur_time - self.last_time).total_seconds()
             self.az_rate = (self.cur_az - self.last_az) / self.time_delta
             self.el_rate = (self.cur_el - self.last_el) / self.time_delta
-            
+
             if abs(self.az_rate) > 0: self.az_motion = True
             else: self.az_motion = False
 
             if abs(self.el_rate) > 0: self.el_motion = True
             else: self.el_motion = False
-            
+
             if self.log_flag: self.update_log()
 
             if abs(self.az_rate) > self.az_thresh: self.az_thresh_fault = True
             if abs(self.el_rate) > self.el_thresh: self.el_thresh_fault = True
 
-            if ((self.az_thresh_fault == True) or (self.el_thresh_fault)): 
+            if ((self.az_thresh_fault == True) or (self.el_thresh_fault)):
                 self.Antenna_Threshold_Fault()
             else:
                 self.last_az = self.cur_az
@@ -169,7 +171,7 @@ class MD01Thread(threading.Thread):
             print "{:s}Rotation Rate: {:2.3f} [deg/s] exceeded threshold {:2.3f} [deg/s]".format(cur_time_stamp, self.az_rate, self.az_thresh)
         if self.el_thresh_fault == True:
             print cur_time_stamp + "Antenna Elevation Motion Fault"
-            print "{:s}Rotation Rate: {:2.3f} [deg/s] exceeded threshold {:2.3f} [deg/s]".format(cur_time_stamp, self.el_rate, self.el_thresh)         
+            print "{:s}Rotation Rate: {:2.3f} [deg/s] exceeded threshold {:2.3f} [deg/s]".format(cur_time_stamp, self.el_rate, self.el_thresh)
         print "{:s}cur_az: {:+3.1f}, last_az: {:+3.1f}".format(cur_time_stamp, self.cur_az, self.last_az)
         print "{:s}cur_el: {:+3.1f}, last_el: {:+3.1f}, time_delta: {:+3.1f} [ms]".format(cur_time_stamp, self.cur_el, self.last_el, self.time_delta*1000)
         print self.utc_ts() + "--- Killing Thread Now... ---"
@@ -219,7 +221,7 @@ class MD01Thread(threading.Thread):
         self.callback = callback
 
     def utc_ts(self):
-        return str(date.utcnow()) + " UTC | MD01 | "
+        return "{:s} | md01 | ".format(datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%fZ'))
 
     def set_stop(self):
         self.tar_az = self.cur_az
@@ -234,5 +236,3 @@ class MD01Thread(threading.Thread):
 
     def stopped(self):
         return self._stop.isSet()
-
-

@@ -33,7 +33,7 @@ class Main_Thread(threading.Thread):
         self.cfg = cfg
         self.thread_enable = self.cfg['thread_enable']
 
-        log_name = 'trackd_{:s}'.format(self.cfg['ssid']
+        log_name = 'trackd_{:s}'.format(self.cfg['ssid'])
         self.main_log_fh = setup_logger(log_name,
                                         path=self.cfg['log_path'],
                                         ts=self.cfg['startup_ts'])
@@ -62,30 +62,30 @@ class Main_Thread(threading.Thread):
                         self.logger.info('Successfully Launched Threads, Switching to IDLE State')
                         self._set_state('IDLE')
                         time.sleep(1)
-                    else:
-                        self.set_state('FAULT')
-                    pass
-                else: # NOT IN BOOT State
+                elif self.state == 'FAULT':
+                    print "in FAULT sate, exiting"
+                    sys.exit()
+                else:# NOT IN BOOT State
                     #Always check for service message
-                    if (not self.service_thread.rx_q.empty()): #Received a message from user
-                        msg = self.c2_thread.rx_q.get()
-                        self._process_service_message(msg.strip())
-                    if (not self.md01_thread.rx_q.empty()):
-                        fft_msg = self.radio_thread.fft_q.get()
-                        self._process_fft_snapshot(fft_msg)
+                    if (self.thread_enable['service'] and (not self.service_thread.rx_q.empty())): #Received a message from user
+                        msg = self.service_thread.rx_q.get()
+                        self._process_service_message(msg)
+                    if (self.thread_enable['md01'] and (not self.md01_thread.rx_q.empty())):
+                        msg = self.md01_thread.fft_q.get()
+                        self._process_md01_message(msg)
                         #self.radio_thread._fft_snapshot()
                     #self._process_c2_message('fft')
                 time.sleep(0.1)
 
         except (KeyboardInterrupt, SystemExit): #when you press ctrl+c
-            print "\nCaught CTRL-C, Killing Threads..."
+            print "\n"+self.utc_ts() + "Caught CTRL-C, Killing Threads..."
             self.logger.warning('Caught CTRL-C, Terminating Threads...')
             self._stop_threads()
             self.logger.warning('Terminating Main Thread...')
             sys.exit()
         sys.exit()
 
-    def _process_srvice_message(self, msg):
+    def _process_service_message(self, msg):
         print msg
 
 
@@ -98,8 +98,8 @@ class Main_Thread(threading.Thread):
                 if self.thread_enable[key]:
                     if key == 'service': #Initialize Service Thread
                         self.logger.info('Setting up Service Thread')
-                        self.serv_thread = Service_Thread(self.cfg['service'], self.logger) #Service Thread
-                        self.serv_thread.daemon = True
+                        self.service_thread = Service_Thread(self.cfg['service'], self.logger) #Service Thread
+                        self.service_thread.daemon = True
                     elif key == 'md01': #Initialize mD01 Thread
                         self.logger.info('Setting up MD01 Thread')
                         self.md01_thread = MD01_Thread(self.cfg['md01'], self.logger) #MD01 Thread
@@ -109,26 +109,28 @@ class Main_Thread(threading.Thread):
                 if self.thread_enable[key]:
                     if key == 'service': #Start Service Thread
                         self.logger.info('Launching Service Thread')
-                        self.serv_thread.start() #non-blocking
+                        self.service_thread.start() #non-blocking
                     elif key == 'md01': #Initialize Radio Thread
                         self.logger.info('Launching MD01 Thread')
                         self.md01_thread.start() #non-blocking
             return True
         except Exception as e:
-            self.logger.warning('Error Launching Threads:')
-            self.logger.warning(str(e))
+            self.logger.error('Error Launching Threads:', exc_info=True)
             self.logger.warning('Setting STATE --> FAULT')
-            self._set_state = 'FAULT'
             return False
 
     def _stop_threads(self):
         for key in self.thread_enable.keys():
             if self.thread_enable[key]:
                 if key == 'service': #Initialize C2 Thread
-                    self.serv_thread.stop()
+                    self.service_thread.stop()
+                    print self.utc_ts() + "Terminated Service Thread."
+                    self.logger.warning("Terminated Service Thread.")
                     #self.c2_thread.join() # wait for the thread to finish what it's doing
                 elif key == 'md01': #Initialize Radio Thread
                     self.md01_thread.stop()
+                    print self.utc_ts() + "Terminated MD01 Thread..."
+                    self.logger.warning("Terminated MD01 Thread...")
                     #self.radio_thread.join() # wait for the thread to finish what it's doing
 
 

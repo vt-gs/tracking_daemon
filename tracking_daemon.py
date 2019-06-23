@@ -17,7 +17,7 @@ import numpy
 import argparse
 import json
 from threading import Thread
-#from main_thread import *
+from main_thread import *
 import datetime as dt
 
 
@@ -36,7 +36,7 @@ if __name__ == '__main__':
     #General Options
     cwd = os.getcwd()
     #sch_fp_default = '/'.join([cwd, 'schedule'])
-    cfg_fp_default = '/'.join([cwd, 'configs'])
+    cfg_fp_default = '/'.join([cwd, 'config'])
     parser.add_argument("--cfg_fp"   ,
                         dest   = "cfg_path" ,
                         action = "store",
@@ -59,8 +59,11 @@ if __name__ == '__main__':
         cfg = json.loads(cfg_f.read())
 
     cfg.update({'startup_ts':startup_ts})
+    cfg['service'].update({'ssid':cfg['ssid']})
+    cfg['service'].update({'log_path':cfg['log_path']})
     print json.dumps(cfg, indent=4)
+
     #print cfg
-    sys.exit()
+    #sys.exit()
     main(cfg)
     sys.exit()
