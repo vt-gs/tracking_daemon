@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 #################################################
-#   Title: MD01 Class                           #
+#   Title: Tracking Daemon                      #
 # Project: VTGS Tracking Daemon                 #
-# Version: 3.                                   #
+# Version: 2.1                                  #
 #    Date: Aug 03, 2016                         #
 #  Author: Zach Leffke, KJ4QLP                  #
 # Comment: This version of the Tracking Daemon  #
@@ -20,18 +20,16 @@ import string
 import sys
 import time
 import threading
-import binascii
-import datetime
-import logging
+from binascii import *
+from datetime import datetime as date
 
 class md01(object):
-    """docstring for ."""
-    def __init__ (self, cfg, logger):
-        self.ip         = cfg['ip']        #IP Address of MD01 Controller
-        self.port       = cfg['port']      #Port number of MD01 Controller
-        self.timeout    = cfg['timeout']   #Socket Timeout interval, default = 1.0 seconds
+    def __init__ (self, ip, port, timeout = 1.0, retries = 2):
+        self.ip         = ip        #IP Address of MD01 Controller
+        self.port       = port      #Port number of MD01 Controller
+        self.timeout    = timeout   #Socket Timeout interval, default = 1.0 seconds
         self.connected  = False
-        self.logger     = logger
+        self.retries    = retries   #Number of times to attempt reconnection, default = 2
         self.cmd_az     = 0         #Commanded Azimuth, used in Set Position Command
         self.cmd_el     = 0         #Commanded Elevation, used in Set Position command
         self.cur_az     = 0         #  Current Azimuth, in degrees, from feedback
@@ -39,13 +37,6 @@ class md01(object):
         self.ph         = 10        #  Azimuth Resolution, in pulses per degree, from feedback, default = 10
         self.pv         = 10        #Elevation Resolution, in pulses per degree, from feedback, default = 10
         self.feedback   = ''        #Feedback data from socket
-
-        self.status = {
-            'connected':False,
-            'cur_az': 0.0,
-            'cur_el':0.0
-        }
-
         self.stop_cmd   = bytearray()   #Stop Command Message
         self.status_cmd = bytearray()   #Status Command Message
         self.set_cmd    = bytearray()   #Set Command Message
@@ -54,11 +45,11 @@ class md01(object):
         for x in [0x57,0,0,0,0,0x0a,0,0,0,0,0x0a,0x2F,0x20]: self.set_cmd.append(x) #PH=PV=0x0a, 0x0a = 10, BIG-RAS/HR is 10 pulses per degree
 
     def utc_ts(self):
-        return "{:s} | md01 | ".format(datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%fZ'))
+        return str(date.utcnow()) + " UTC | md01 | "
 
     def connect(self):
         #connect to md01 controller
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #TCP Socket
+        self.sock       = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #TCP Socket
         self.sock.settimeout(self.timeout)   #set socket timeout
         try:
             self.sock.connect((self.ip, self.port))
@@ -78,7 +69,7 @@ class md01(object):
         self.connected = False
         print self.utc_ts() + "Disconnected from MD01"
         return self.connected
-
+    
     def get_status(self):
         #get azimuth and elevation feedback from md01
         if self.connected == False:
@@ -88,18 +79,18 @@ class md01(object):
             try:
                 self.sock.send(self.status_cmd)
                 #print self.utc_ts() + 'Sent \'GET\' command to MD01'
-                self.feedback = self._recv_data()
-                self._convert_feedback()
+                self.feedback = self.recv_data()
+                self.convert_feedback()
             except socket.error as msg:
                 #print "Exception Thrown: " + str(msg) + " (" + str(self.timeout) + "s)"
                 #print "Closing socket, Terminating program...."
                 print self.utc_ts() + "Exception Thrown: " + str(msg) + " (" + str(self.timeout) + "s)"
                 print self.utc_ts() + "Closing socket, Terminating program...."
                 self.sock.close()
-                self.status['cur_az'] = 0
-                self.status['cur_el'] = 0
-                self.status['connected'] = False
-            return self.status #return 0 good status, feedback az/el
+                self.cur_az = 0
+                self.cur_el = 0
+                self.connected = False
+            return self.connected, self.cur_az, self.cur_el #return 0 good status, feedback az/el 
 
     def set_stop(self):
         #stop md01 immediately
@@ -108,83 +99,79 @@ class md01(object):
             return self.connected, 0, 0
         else:
             try:
-                self.sock.send(self.stop_cmd)
+                self.sock.send(self.stop_cmd) 
                 print self.utc_ts() + 'Sent \'STOP\' command to MD01'
-                self.feedback = self.recv_data()
-                self._convert_feedback()
+                self.feedback = self.recv_data()  
+                self.convert_feedback()        
             except socket.error as msg:
                 #print "Exception Thrown: " + str(msg) + " (" + str(self.timeout) + "s)"
                 #print "Closing socket, Terminating program...."
                 print self.utc_ts() + "Exception Thrown: " + str(msg) + " (" + str(self.timeout) + "s)"
                 print self.utc_ts() + "Closing socket, Terminating program...."
                 self.sock.close()
-                self.status['cur_az'] = 0
-                self.status['cur_el'] = 0
-                self.status['connected'] = False
-            #return self.connected, self.cur_az, self.cur_el  #return 0 good status, feedback az/el
-            return self.status #return 0 good status, feedback az/el
+                self.cur_az = 0
+                self.cur_el = 0
+                self.connected = False
+            return self.connected, self.cur_az, self.cur_el  #return 0 good status, feedback az/el 
 
     def set_position(self, az, el):
         #set azimuth and elevation of md01
         self.cmd_az = az
         self.cmd_el = el
-        self._format_set_cmd()
+        self.format_set_cmd()
         if self.connected == False:
             #self.printNotConnected('Set Position')
             return self.connected, 0, 0
         else:
             try:
-                self.sock.send(self.set_cmd)
+                self.sock.send(self.set_cmd) 
                 print '{:s}Sent \'SET\' command to MD01: AZ={:3.1f}, EL={:3.1f}'.format(self.utc_ts(), self.cmd_az, self.cmd_el)
-                #Set Position command does not get a feedback response from MD-01
+                #Set Position command does not get a feedback response from MD-01   
             except socket.error as msg:
                 #print "Exception Thrown: " + str(msg)
                 #print "Closing socket, Terminating program...."
                 print self.utc_ts() + "Exception Thrown: " + str(msg) + " (" + str(self.timeout) + "s)"
                 print self.utc_ts() + "Closing socket, Terminating program...."
                 self.sock.close()
-                self.status['connected'] = False
-            #return self.connected, self.cur_az, self.cur_el
-            return self.status #return 0 good status, feedback az/el
+                self.connected = False
+            return self.connected, self.cur_az, self.cur_el
 
-    def _recv_data(self):
+    def recv_data(self):
         #receive socket data
         feedback = ''
         while True: #cycle through recv buffer
             c = self.sock.recv(1)
-            #if binascii.hexlify(c) == '57': # Start Flag detected
-            if c == 0x57: # Start Flag detected
+            if hexlify(c) == '57': # Start Flag detected
                 feedback += c
                 flag = True
                 while flag: #continue cycling through receive buffer
                     c = self.sock.recv(1)
-                    #if binascii.hexlify(c) == '20':
-                    if c == 0x20:
+                    if hexlify(c) == '20':
                         feedback += c
                         flag = False
                     else:
                         feedback += c
                 break
-        #print binascii.hexlify(feedback)
+        #print hexlify(feedback)
         return feedback
 
-    def _convert_feedback(self):
+    def convert_feedback(self):
         h1 = ord(self.feedback[1])
         h2 = ord(self.feedback[2])
         h3 = ord(self.feedback[3])
         h4 = ord(self.feedback[4])
         #print h1, h2, h3, h4
-        self.status['cur_az'] = (h1*100.0 + h2*10.0 + h3 + h4/10.0) - 360.0
+        self.cur_az = (h1*100.0 + h2*10.0 + h3 + h4/10.0) - 360.0
         self.ph = ord(self.feedback[5])
 
         v1 = ord(self.feedback[6])
         v2 = ord(self.feedback[7])
         v3 = ord(self.feedback[8])
         v4 = ord(self.feedback[9])
-        self.status['cur_el'] = (v1*100.0 + v2*10.0 + v3 + v4/10.0) - 360.0
+        self.cur_el = (v1*100.0 + v2*10.0 + v3 + v4/10.0) - 360.0
         self.pv = ord(self.feedback[10])
 
-    def _format_set_cmd(self):
+    def format_set_cmd(self):
         #make sure cmd_az in range -180 to +540
         if   (self.cmd_az>540): self.cmd_az = 540
         elif (self.cmd_az < -180): self.cmd_az = -180
@@ -214,3 +201,8 @@ class md01(object):
         self.set_cmd[8] = cmd_el_str[2]
         self.set_cmd[9] = cmd_el_str[3]
         self.set_cmd[10] = self.pv
+
+    def printNotConnected(self, msg):
+        print self.getTimeStampGMT() + "MD01 |  Cannot " + msg + " until connected to MD01 Controller."
+
+

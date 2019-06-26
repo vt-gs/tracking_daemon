@@ -61,6 +61,8 @@ if __name__ == '__main__':
     cfg.update({'startup_ts':startup_ts})
     cfg['service'].update({'ssid':cfg['ssid']})
     cfg['service'].update({'log_path':cfg['log_path']})
+    cfg['md01'].update({'ssid':cfg['ssid']})
+    cfg['md01'].update({'log_path':cfg['log_path']})
     print json.dumps(cfg, indent=4)
 
     #print cfg

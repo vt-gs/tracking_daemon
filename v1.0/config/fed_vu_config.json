@@ -3,19 +3,21 @@
     "ssid":"fed_vu",
     "thread_enable":{
         "service": true,
-        "md01":false
+        "md01":true
     },
     "md01":{
         "ip":"10.42.0.31",
         "port":2000,
+        "timeout": 5.0,
+        "poll_rate": 0.5,
         "az_thresh": 2.0,
-        "el_thresh": 3.0,
-        "timeout": 1.0
+        "el_thresh": 3.0
     },
     "service":{
         "ip":"0.0.0.0",
         "port":2000,
-        "timeout":0.5
+        "timeout":0.5,
+        "watchdog_interval":60.0
     },
     "messages":{
         "tc":{
@@ -39,7 +41,7 @@
         "tm":{
             "uid":"username",
             "ssid":"fed_vu",
-            "type":["tm","bad_syntax"],
+            "type":["tm","mgmt"],
             "session_id":null,
             "tx_ts":"",
             "rx_ts":"",
