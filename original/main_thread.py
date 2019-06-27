@@ -52,7 +52,7 @@ class MainThread(threading.Thread):
     def run(self):
         print self.utc_ts() + self.ssid + " Main Thread Started..."
         self.print_state()
-        while (not self._stop.isSet()): 
+        while (not self._stop.isSet()):
             if self.state == 'IDLE':
                 pass
             elif self.state == 'STANDBY':
@@ -72,7 +72,7 @@ class MainThread(threading.Thread):
         #Sets user connection status
         self.user_con = con
         self.check_con_status()
-    
+
     def management_frame_received(self, parent, frame, ts):
         #Called from server thread when management frame received
         if frame.cmd == 'START':  #initiate User Session
@@ -138,7 +138,7 @@ class MainThread(threading.Thread):
         #sets daemon state accordingly
         if   self.user_con == True: #user is connected
             if self.md01_con == True: #MD01 is connected
-                if self.state == 'IDLE': #Daemon is in IDLE 
+                if self.state == 'IDLE': #Daemon is in IDLE
                     # DO NOT NEED TO STOP MD01
                     self.set_state_standby()
             if self.md01_con == False: #MD01 is not connected
@@ -152,8 +152,8 @@ class MainThread(threading.Thread):
     def set_state_idle(self):
         self.state = 'IDLE'
         self.stop_logging()
-        self.print_state()        
-        
+        self.print_state()
+
     def set_state_standby(self):
         self.state = 'STANDBY'
         self.stop_logging()
@@ -175,7 +175,7 @@ class MainThread(threading.Thread):
     def print_state(self):
         print self.utc_ts() + "Connection Status (USER/MD01): " + str(self.user_con) + '/' + str(self.md01_con)
         print self.utc_ts() + self.ssid + " Daemon State: " + str(self.state)
-    
+
     def utc_ts(self):
         return str(date.utcnow()) + " UTC | MAIN | "
 
@@ -185,5 +185,3 @@ class MainThread(threading.Thread):
 
     def stopped(self):
         return self._stop.isSet()
-
-

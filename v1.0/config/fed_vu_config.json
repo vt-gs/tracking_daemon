@@ -43,6 +43,7 @@
             "ssid":"fed_vu",
             "type":["tm","mgmt"],
             "session_id":null,
+            "daemon_state":1,
             "tx_ts":"",
             "rx_ts":"",
             "az":0.0,

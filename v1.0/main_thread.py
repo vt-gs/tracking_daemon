@@ -157,7 +157,7 @@ class Main_Thread(threading.Thread):
             if msg['type'] == 'tc':
                 if msg['cmd'] == 'start':
                     print '{:s}User \'{:s}\' requested session START'.format(self.utc_ts(), msg['user'])
-                    self.logger.info("User \'{:s}\' requested session START".format(msg['user'])
+                    self.logger.info("User \'{:s}\' requested session START".format(msg['user']))
                     self.user = msg['user']
                     self._start_active_session(msg['user'])
                     pass
@@ -169,7 +169,7 @@ class Main_Thread(threading.Thread):
             if msg['type'] == 'tc':
                 if msg['cmd'] == 'stop':
                     print '{:s}User \'{:s}\' requested session STOP'.format(self.utc_ts(), msg['user'])
-                    self.logger.info("User \'{:s}\' requested session STOP".format(msg['user'])
+                    self.logger.info("User \'{:s}\' requested session STOP".format(msg['user']))
                     pass
                 if msg['cmd'] == 'query':
                     pass

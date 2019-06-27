@@ -58,6 +58,9 @@ if __name__ == '__main__':
     with open(cfg_fp, 'r') as cfg_f:
         cfg = json.loads(cfg_f.read())
 
+    cfg_fp = '/'.join([cfg['log_path'], cfg['ssid']])
+    cfg['log_path'] = cfg_fp
+
     cfg.update({'startup_ts':startup_ts})
     cfg['service'].update({'ssid':cfg['ssid']})
     cfg['service'].update({'log_path':cfg['log_path']})

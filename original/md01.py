@@ -69,7 +69,7 @@ class md01(object):
         self.connected = False
         print self.utc_ts() + "Disconnected from MD01"
         return self.connected
-    
+
     def get_status(self):
         #get azimuth and elevation feedback from md01
         if self.connected == False:
@@ -90,7 +90,7 @@ class md01(object):
                 self.cur_az = 0
                 self.cur_el = 0
                 self.connected = False
-            return self.connected, self.cur_az, self.cur_el #return 0 good status, feedback az/el 
+            return self.connected, self.cur_az, self.cur_el #return 0 good status, feedback az/el
 
     def set_stop(self):
         #stop md01 immediately
@@ -99,20 +99,21 @@ class md01(object):
             return self.connected, 0, 0
         else:
             try:
-                self.sock.send(self.stop_cmd) 
+                self.sock.send(self.stop_cmd)
                 print self.utc_ts() + 'Sent \'STOP\' command to MD01'
-                self.feedback = self.recv_data()  
-                self.convert_feedback()        
+                #self.feedback = self.recv_data()
+                #self.convert_feedback()
             except socket.error as msg:
                 #print "Exception Thrown: " + str(msg) + " (" + str(self.timeout) + "s)"
                 #print "Closing socket, Terminating program...."
                 print self.utc_ts() + "Exception Thrown: " + str(msg) + " (" + str(self.timeout) + "s)"
+                #print
                 print self.utc_ts() + "Closing socket, Terminating program...."
                 self.sock.close()
                 self.cur_az = 0
                 self.cur_el = 0
                 self.connected = False
-            return self.connected, self.cur_az, self.cur_el  #return 0 good status, feedback az/el 
+            return self.connected, self.cur_az, self.cur_el  #return 0 good status, feedback az/el
 
     def set_position(self, az, el):
         #set azimuth and elevation of md01
@@ -124,9 +125,10 @@ class md01(object):
             return self.connected, 0, 0
         else:
             try:
-                self.sock.send(self.set_cmd) 
+                self.sock.send(self.set_cmd)
                 print '{:s}Sent \'SET\' command to MD01: AZ={:3.1f}, EL={:3.1f}'.format(self.utc_ts(), self.cmd_az, self.cmd_el)
-                #Set Position command does not get a feedback response from MD-01   
+                self.feedback = self.recv_data()
+                self.convert_feedback()
             except socket.error as msg:
                 #print "Exception Thrown: " + str(msg)
                 #print "Closing socket, Terminating program...."
@@ -204,5 +206,3 @@ class md01(object):
 
     def printNotConnected(self, msg):
         print self.getTimeStampGMT() + "MD01 |  Cannot " + msg + " until connected to MD01 Controller."
-
-
