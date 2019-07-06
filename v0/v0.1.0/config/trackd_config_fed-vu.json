@@ -1,0 +1,32 @@
+{
+    "daemon_name":"trackd",
+    "ssid":"fed-vu",
+    "log_path":"/vtgs/log/trackd",
+    "main_log":{
+        "level":"DEBUG",
+        "verbose":true
+    },
+    "thread_enable":{
+        "service": true,
+        "device":true
+    },
+    "service":{
+        "thread_name":"Service_Thread",
+        "type":"TCP",
+        "name":"service",
+        "ip":"0.0.0.0",
+        "port":2000,
+        "retry_time":5.0,
+        "timeout":0.01
+    },
+    "device":{
+        "thread_name":"MD01_Thread",
+        "name":"md01",
+        "ip":"10.42.0.31",
+        "port":2000,
+        "retry_time":5.0,
+        "az_thresh":4.0,
+        "el_thresh":4.0,
+        "poll_rate":0.25
+    }
+}
