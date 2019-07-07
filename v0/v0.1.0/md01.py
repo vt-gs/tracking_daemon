@@ -20,11 +20,12 @@ import string
 import sys
 import time
 import threading
+import logging
 from binascii import *
 from datetime import datetime as date
 
 class md01(object):
-    def __init__ (self, ip, port, timeout = 1.0, retries = 2):
+    def __init__ (self, ip, port, log_name, timeout = 1.0, retries = 2):
         self.ip         = ip        #IP Address of MD01 Controller
         self.port       = port      #Port number of MD01 Controller
         self.timeout    = timeout   #Socket Timeout interval, default = 1.0 seconds
@@ -37,6 +38,9 @@ class md01(object):
         self.ph         = 10        #  Azimuth Resolution, in pulses per degree, from feedback, default = 10
         self.pv         = 10        #Elevation Resolution, in pulses per degree, from feedback, default = 10
         self.feedback   = ''        #Feedback data from socket
+
+        self.logger     = logging.getLogger(log_name)
+
         self.stop_cmd   = bytearray()   #Stop Command Message
         self.status_cmd = bytearray()   #Status Command Message
         self.set_cmd    = bytearray()   #Set Command Message
@@ -67,7 +71,7 @@ class md01(object):
         self.sock.shutdown(socket.SHUT_RDWR)
         self.sock.close()
         self.connected = False
-        print self.utc_ts() + "Disconnected from MD01"
+        self.logger.info("Disconnected from MD01: [{:s},{:d}]".format(self.ip, self.port))
         return self.connected
 
     def get_status(self):
@@ -84,8 +88,8 @@ class md01(object):
             except socket.error as msg:
                 #print "Exception Thrown: " + str(msg) + " (" + str(self.timeout) + "s)"
                 #print "Closing socket, Terminating program...."
-                print self.utc_ts() + "Exception Thrown: " + str(msg) + " (" + str(self.timeout) + "s)"
-                print self.utc_ts() + "Closing socket, Terminating program...."
+                self.logger.info("Socket Exception: {:s} ({:f})".format(msg, self.timeout))
+                self.logger.info("Closing Socket...")
                 self.sock.close()
                 self.cur_az = 0
                 self.cur_el = 0
@@ -100,15 +104,13 @@ class md01(object):
         else:
             try:
                 self.sock.send(self.stop_cmd)
-                print self.utc_ts() + 'Sent \'STOP\' command to MD01'
+                #print self.utc_ts() + 'Sent \'STOP\' command to MD01'
+                self.logger.info('Sent \'STOP\' command to MD01')
                 #self.feedback = self.recv_data()
                 #self.convert_feedback()
             except socket.error as msg:
-                #print "Exception Thrown: " + str(msg) + " (" + str(self.timeout) + "s)"
-                #print "Closing socket, Terminating program...."
-                print self.utc_ts() + "Exception Thrown: " + str(msg) + " (" + str(self.timeout) + "s)"
-                #print
-                print self.utc_ts() + "Closing socket, Terminating program...."
+                self.logger.info("Socket Exception: {:s} ({:f})".format(msg, self.timeout))
+                self.logger.info("Closing Socket...")
                 self.sock.close()
                 self.cur_az = 0
                 self.cur_el = 0
@@ -126,14 +128,10 @@ class md01(object):
         else:
             try:
                 self.sock.send(self.set_cmd)
-                print '{:s}Sent \'SET\' command to MD01: AZ={:3.1f}, EL={:3.1f}'.format(self.utc_ts(), self.cmd_az, self.cmd_el)
+                self.logger.info('Sent \'SET\' command to MD01: AZ={:3.1f}, EL={:3.1f}'.format(self.cmd_az, self.cmd_el))
                 self.feedback = self.recv_data()
                 self.convert_feedback()
             except socket.error as msg:
-                #print "Exception Thrown: " + str(msg)
-                #print "Closing socket, Terminating program...."
-                print self.utc_ts() + "Exception Thrown: " + str(msg) + " (" + str(self.timeout) + "s)"
-                print self.utc_ts() + "Closing socket, Terminating program...."
                 self.sock.close()
                 self.connected = False
             return self.connected, self.cur_az, self.cur_el

@@ -1,6 +1,6 @@
 {
     "daemon_name":"trackd",
-    "ssid":"fed-vu",
+    "ssid":"VUL",
     "log_path":"/vtgs/log/trackd",
     "main_log":{
         "level":"DEBUG",
@@ -17,7 +17,10 @@
         "ip":"0.0.0.0",
         "port":2000,
         "retry_time":5.0,
-        "timeout":0.01
+        "timeout":300,
+        "log":{
+          "verbose":false
+        }
     },
     "device":{
         "thread_name":"MD01_Thread",
@@ -25,8 +28,12 @@
         "ip":"10.42.0.31",
         "port":2000,
         "retry_time":5.0,
+        "timeout":1.0,
         "az_thresh":4.0,
         "el_thresh":4.0,
-        "poll_rate":0.25
+        "poll_rate":0.25,
+        "log":{
+          "verbose":false
+        }
     }
 }
