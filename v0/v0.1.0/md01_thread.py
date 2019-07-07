@@ -136,7 +136,7 @@ class MD01_Thread(threading.Thread):
             except:
                 #print self.utc_ts() + "Unexpected error in thread:", self.ssid,'\n', sys.exc_info() # substitute logging
                 self.logger.warning("Unexpected error")
-                self.logger.error(sys.exec_info())
+                self.logger.error(sys.exc_info())
                 self.connected = False
                 self.thread_fault = True
 

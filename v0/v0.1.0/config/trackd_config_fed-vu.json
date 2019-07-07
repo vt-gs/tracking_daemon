@@ -1,6 +1,6 @@
 {
     "daemon_name":"trackd",
-    "ssid":"VUL",
+    "ssid":"fed-vu",
     "log_path":"/vtgs/log/trackd",
     "main_log":{
         "level":"DEBUG",
@@ -29,8 +29,8 @@
         "port":2000,
         "retry_time":5.0,
         "timeout":1.0,
-        "az_thresh":4.0,
-        "el_thresh":4.0,
+        "az_thresh":6.0,
+        "el_thresh":6.0,
         "poll_rate":0.25,
         "log":{
           "verbose":false

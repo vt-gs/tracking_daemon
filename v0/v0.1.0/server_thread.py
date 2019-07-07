@@ -59,7 +59,7 @@ class VTP_Service_Thread_TCP(threading.Thread):
         self.logger     = logging.getLogger(self.cfg['main_log'])
         self.data_logger = None
 
-        self.ssid       = self.cfg['ssid']
+        self.ssid       = self.cfg['ssid'].lower()
         self.ip         = self.cfg['ip']
         self.port       = self.cfg['port']
 
@@ -93,10 +93,9 @@ class VTP_Service_Thread_TCP(threading.Thread):
                 elif self.user_con == True:
                     data = self.conn.recvfrom(1024)[0]
                     ts = date.utcnow()
-                    if self.data_logger != None:
-                        self.data_logger.info(data)
                     if data:
                         data = data.strip()
+                        if self.data_logger != None: self.data_logger.info(data)
                         if self.check_frame(data): #True if fully validated frame
                             #Valid FRAME with all checks complete at this point
                             if self.frame.type == 'MOT': #Process Motion Frame
@@ -133,7 +132,7 @@ class VTP_Service_Thread_TCP(threading.Thread):
 
     def start_logging(self, ts):
         self.cfg['log']['startup_ts'] = ts
-        print self.cfg['log']
+        #print self.cfg['log']
         setup_logger(self.cfg['log'])
         self.data_logger = logging.getLogger(self.cfg['log']['name']) #main logger
         for handler in self.data_logger.handlers:
@@ -195,7 +194,7 @@ class VTP_Service_Thread_TCP(threading.Thread):
                     return False
 
                 #Validate SSID
-                ssid = str(fields[1]).strip().upper()  #typecast to string, remove whitespace, force to uppercase
+                ssid = str(fields[1]).strip().lower()  #typecast to string, remove whitespace, force to uppercase
                 if ssid != self.ssid:
                     self.logger.info('Invalid SSID: \'{:s}\' (user) != \'{:s}\' (self)'.format(ssid, self.ssid))
                     return False
